@@ -13,12 +13,10 @@ import (
 
 func main() {
 	l := log.New(os.Stdout, "product-api ", log.LstdFlags)
-	hh := handlers.NewHello(l)
-	gh := handlers.NewGoodbye(l)
+	ph := handlers.NewProducts(l)
 
 	sm := http.NewServeMux()
-	sm.Handle("/", hh)
-	sm.Handle("/goodbye", gh)
+	sm.Handle("/", ph)
 
 	s := http.Server{
 		Addr:         ":8000",
@@ -42,7 +40,6 @@ func main() {
 	sig := <-sigChan
 	l.Printf("Recieved terminal signal [%s], gracefully shutting down... \n", sig)
 
-	duration := time.Now().Add(30 * time.Second)
-	ctx, _ := context.WithDeadline(context.Background(), duration)
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 	s.Shutdown(ctx)
 }
