@@ -30,9 +30,11 @@ func main() {
 
 	postRouter := router.Methods("POST").Subrouter()
 	postRouter.HandleFunc("/", handler.AddRecipe)
+	postRouter.Use(handler.BodyParserJSON)
 
 	putRouter := router.Methods("PUT").Subrouter()
 	putRouter.HandleFunc("/{id:[\\w]+}", handler.UpdateRecipe)
+	putRouter.Use(handler.BodyParserJSON)
 
 	port := os.Getenv("SERVER_PORT")
 	address := ":" + port

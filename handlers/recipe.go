@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -29,13 +30,8 @@ func (handler *Handler) GetRecipes(w http.ResponseWriter, r *http.Request) {
 
 // AddRecipe adds a new recipe to the database
 func (handler *Handler) AddRecipe(w http.ResponseWriter, r *http.Request) {
-	recipe := &data.Recipe{}
-	err := recipe.FromJSON(r.Body)
-	if err != nil {
-		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
-	}
-
-	addedRecipe := data.AddRecipe(recipe)
+	recipe := r.Context().Value(RecipeKey{}).(data.Recipe)
+	addedRecipe := data.AddRecipe(&recipe)
 	handler.logger.Printf("Added recipe [id: %s]", addedRecipe.ID)
 }
 
@@ -44,14 +40,29 @@ func (handler *Handler) UpdateRecipe(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	recipe := &data.Recipe{}
-	err := recipe.FromJSON(r.Body)
-	if err != nil {
-		http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
-	}
-	updatedRecipe, err := data.UpdateRecipe(id, recipe)
+	recipe := r.Context().Value(RecipeKey{}).(data.Recipe)
+	updatedRecipe, err := data.UpdateRecipe(id, &recipe)
 	if err != nil {
 		http.Error(w, "Recipe not found", http.StatusInternalServerError)
 	}
 	handler.logger.Printf("Updated recipe [id: %s]", updatedRecipe.ID)
+}
+
+type RecipeKey struct{}
+
+// BodyParserJSON parses JSON data from the request and deserializes it to a recipe struct
+func (handler *Handler) BodyParserJSON(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		recipe := data.Recipe{}
+
+		err := recipe.FromJSON(r.Body)
+		if err != nil {
+			http.Error(w, "Unable to unmarshal JSON", http.StatusBadRequest)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), RecipeKey{}, recipe)
+		r = r.WithContext(ctx)
+		next.ServeHTTP(w, r)
+	})
 }
