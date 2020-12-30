@@ -6,18 +6,21 @@ import (
 	"io"
 	"time"
 
+	"github.com/go-playground/validator"
 	"github.com/google/uuid"
 )
 
+// Recipe is the shape of a recipe
 type Recipe struct {
 	ID           string   `json:"id"`
-	Name         string   `json:"name"`
-	Ingredients  []string `json:"ingredients"`
-	Instructions string   `json:"instructions"`
+	Name         string   `json:"name" validate:"required"`
+	Ingredients  []string `json:"ingredients" validate:"required"`
+	Instructions string   `json:"instructions" validate:"required"`
 	CreatedAt    string   `json:"createdAt"`
 	UpdatedAt    string   `json:"updatedAt"`
 }
 
+// Recipes are a slice of recipe pointers
 type Recipes []*Recipe
 
 var recipeList = Recipes{
@@ -45,11 +48,18 @@ var recipeList = Recipes{
 	},
 }
 
+// Validate validates the recipe struct fields
+func (recipe *Recipe) Validate() error {
+	validate := validator.New()
+	return validate.Struct(recipe)
+}
+
 // GetRecipes returns the list of static recipes
 func GetRecipes() Recipes {
 	return recipeList
 }
 
+// AddRecipe adds a recipe to the DB
 func AddRecipe(recipe *Recipe) *Recipe {
 	uuid, _ := uuid.NewRandom()
 	recipe.ID = uuid.String()
@@ -60,6 +70,7 @@ func AddRecipe(recipe *Recipe) *Recipe {
 	return recipe
 }
 
+// UpdateRecipe updates an existing recipe in the DB
 func UpdateRecipe(id string, recipe *Recipe) (*Recipe, error) {
 	index, err := findRecipe(id)
 	if err != nil {

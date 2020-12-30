@@ -61,6 +61,12 @@ func (handler *Handler) BodyParserJSON(next http.Handler) http.Handler {
 			return
 		}
 
+		err = recipe.Validate()
+		if err != nil {
+			handler.logger.Println("Data failed validation", err)
+			http.Error(w, "Error reading product", http.StatusBadRequest)
+		}
+
 		ctx := context.WithValue(r.Context(), RecipeKey{}, recipe)
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
