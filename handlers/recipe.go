@@ -1,58 +1,25 @@
 package handlers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
-	"regexp"
 
+	"github.com/gorilla/mux"
 	"github.com/neil-berg/go-rest/data"
 )
 
-type Recipes struct {
-	l *log.Logger
+// Handler is the basic shape of handlers that take a logger
+type Handler struct {
+	logger *log.Logger
 }
 
-func NewRecipes(l *log.Logger) *Recipes {
-	return &Recipes{l}
+// CreateHandler returns a new Handler object
+func CreateHandler(logger *log.Logger) *Handler {
+	return &Handler{logger}
 }
 
-func (recipes *Recipes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
-		recipes.getRecipes(w, r)
-		return
-	}
-
-	if r.Method == http.MethodPost {
-		recipes.addRecipe(w, r)
-		return
-	}
-
-	if r.Method == http.MethodPut {
-		// Expect the ID in the URI
-		re := regexp.MustCompile(`/([0-9]+)`)
-		match := re.FindAllStringSubmatch(r.URL.Path, -1)
-
-		if len(match) != 1 {
-			http.Error(w, "Invalid URI", http.StatusBadRequest)
-			return
-		}
-
-		if len(match[0]) != 2 {
-			http.Error(w, "Invalid URI", http.StatusBadRequest)
-			return
-		}
-
-		id := match[0][1]
-		recipes.updateRecipe(id, w, r)
-		return
-	}
-
-	// catch all
-	w.WriteHeader(http.StatusMethodNotAllowed)
-}
-
-func (recipes *Recipes) getRecipes(w http.ResponseWriter, r *http.Request) {
+// GetRecipes fetches all recipes from the database
+func (handler *Handler) GetRecipes(w http.ResponseWriter, r *http.Request) {
 	recipeList := data.GetRecipes()
 	err := recipeList.ToJSON(w)
 	if err != nil {
@@ -60,7 +27,8 @@ func (recipes *Recipes) getRecipes(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (recipes *Recipes) addRecipe(w http.ResponseWriter, r *http.Request) {
+// AddRecipe adds a new recipe to the database
+func (handler *Handler) AddRecipe(w http.ResponseWriter, r *http.Request) {
 	recipe := &data.Recipe{}
 	err := recipe.FromJSON(r.Body)
 	if err != nil {
@@ -68,10 +36,14 @@ func (recipes *Recipes) addRecipe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	addedRecipe := data.AddRecipe(recipe)
-	fmt.Printf("Added recipe: %#v", addedRecipe)
+	handler.logger.Printf("Added recipe [id: %s]", addedRecipe.ID)
 }
 
-func (recipes *Recipes) updateRecipe(id string, w http.ResponseWriter, r *http.Request) {
+// UpdateRecipe updates an existing recipe in the database
+func (handler *Handler) UpdateRecipe(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+
 	recipe := &data.Recipe{}
 	err := recipe.FromJSON(r.Body)
 	if err != nil {
@@ -81,5 +53,5 @@ func (recipes *Recipes) updateRecipe(id string, w http.ResponseWriter, r *http.R
 	if err != nil {
 		http.Error(w, "Recipe not found", http.StatusInternalServerError)
 	}
-	fmt.Println("Updated recipe: %#v", updatedRecipe)
+	handler.logger.Printf("Updated recipe [id: %s]", updatedRecipe.ID)
 }
