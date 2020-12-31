@@ -1,0 +1,54 @@
+basePath: /
+consumes:
+- application/json
+definitions:
+  Recipe:
+    description: Recipe is the shape of a recipe
+    properties:
+      createdAt:
+        type: string
+        x-go-name: CreatedAt
+      id:
+        type: string
+        x-go-name: ID
+      ingredients:
+        items:
+          type: string
+        type: array
+        x-go-name: Ingredients
+      instructions:
+        type: string
+        x-go-name: Instructions
+      name:
+        type: string
+        x-go-name: Name
+      updatedAt:
+        type: string
+        x-go-name: UpdatedAt
+    type: object
+    x-go-package: github.com/neil-berg/go-rest/data
+info:
+  description: Documentation for Recipe API
+  title: Recipe API
+  version: 1.0.0
+paths:
+  /recipes:
+    get:
+      description: Returns a list of recipes
+      operationId: recipeList
+      responses:
+        "200":
+          $ref: '#/responses/recipesResponse'
+      tags:
+      - recipes
+produces:
+- application/json
+responses:
+  recipesResponse:
+    schema:
+      items:
+        $ref: '#/definitions/Recipe'
+      type: array
+schemes:
+- http
+swagger: "2.0"

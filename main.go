@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"time"
 
+	ghandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	"github.com/neil-berg/go-rest/handlers"
@@ -26,22 +27,27 @@ func main() {
 	router := mux.NewRouter()
 
 	getRouter := router.Methods("GET").Subrouter()
-	getRouter.HandleFunc("/", handler.GetRecipes)
+	getRouter.HandleFunc("/recipes", handler.GetRecipes)
+	getRouter.HandleFunc("/users", handler.GetUsers)
 
 	postRouter := router.Methods("POST").Subrouter()
-	postRouter.HandleFunc("/", handler.AddRecipe)
-	postRouter.Use(handler.BodyParserJSON)
+	postRouter.HandleFunc("/recipes", handler.AddRecipe)
+	postRouter.Use(handler.ParseJSONRecipe)
 
 	putRouter := router.Methods("PUT").Subrouter()
-	putRouter.HandleFunc("/{id:[\\w]+}", handler.UpdateRecipe)
-	putRouter.Use(handler.BodyParserJSON)
+	putRouter.HandleFunc("/recipes/{id:[\\w]+}", handler.UpdateRecipe)
+	putRouter.Use(handler.ParseJSONRecipe)
+
+	// CORS (for demo client on 9000)
+	allowedOrigins := []string{"http://localhost:9000"}
+	cors := ghandlers.CORS(ghandlers.AllowedOrigins(allowedOrigins))
 
 	port := os.Getenv("SERVER_PORT")
 	address := ":" + port
 
 	s := http.Server{
 		Addr:         address,
-		Handler:      router,
+		Handler:      cors(router),
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
