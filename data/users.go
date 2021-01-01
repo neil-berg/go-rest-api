@@ -2,16 +2,19 @@ package data
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 
 	"github.com/go-playground/validator"
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // User defines the shape of a user
 type User struct {
 	ID       string `json:"id"`
 	Email    string `json:"email" validate:"required"`
-	Password string `json:"-"`
+	Password string `json:"password" validate:"required"`
 }
 
 // Users is a collection of user pointers
@@ -53,4 +56,19 @@ func (users Users) ToJSON(w io.Writer) error {
 // GetUsers returns a list of sample users
 func GetUsers() Users {
 	return sampleUsers
+}
+
+// AddUser adds a new user to the sample users
+func AddUser(user *User) *User {
+	uuid, _ := uuid.NewRandom()
+	user.ID = uuid.String()
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 4)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	user.Password = string(hash)
+	sampleUsers = append(sampleUsers, user)
+	return user
 }

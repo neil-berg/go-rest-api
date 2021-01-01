@@ -34,6 +34,10 @@ func main() {
 	postRouter.HandleFunc("/recipes", handler.AddRecipe)
 	postRouter.Use(handler.ParseJSONRecipe)
 
+	userPostRouter := router.Methods("POST").Subrouter()
+	userPostRouter.HandleFunc("/users", handler.AddUser)
+	userPostRouter.Use(handler.ParseJSONUser)
+
 	putRouter := router.Methods("PUT").Subrouter()
 	putRouter.HandleFunc("/recipes/{id:[\\w]+}", handler.UpdateRecipe)
 	putRouter.Use(handler.ParseJSONRecipe)

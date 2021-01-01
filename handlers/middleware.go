@@ -24,7 +24,7 @@ func (handler *Handler) ParseJSONRecipe(next http.Handler) http.Handler {
 		err = recipe.Validate()
 		if err != nil {
 			handler.logger.Println("Data failed validation", err)
-			http.Error(w, "Error reading product", http.StatusBadRequest)
+			http.Error(w, "Error reading recipe", http.StatusBadRequest)
 		}
 
 		ctx := context.WithValue(r.Context(), RecipeKey{}, recipe)
@@ -43,7 +43,7 @@ func (handler *Handler) ParseJSONUser(next http.Handler) http.Handler {
 
 		err := user.FromJSON(r.Body)
 		if err != nil {
-			handler.logger.Println("Unable to marshal user JSON", http.StatusBadRequest)
+			http.Error(w, "Unable to marshal user JSON", http.StatusBadRequest)
 		}
 
 		err = user.Validate()

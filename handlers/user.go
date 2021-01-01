@@ -14,3 +14,10 @@ func (handler *Handler) GetUsers(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unable to marshal JSON", http.StatusInternalServerError)
 	}
 }
+
+// AddUser adds a user to the list of sample users
+func (handler *Handler) AddUser(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value(UserKey{}).(data.User)
+	addedUser := data.AddUser(&user)
+	handler.logger.Println(addedUser)
+}
