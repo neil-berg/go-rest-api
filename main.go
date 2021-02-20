@@ -72,6 +72,7 @@ func main() {
 	sig := <-sigChan
 	logger.Printf("Recieved terminal signal [%s], gracefully shutting down... \n", sig)
 
-	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 	s.Shutdown(ctx)
 }
